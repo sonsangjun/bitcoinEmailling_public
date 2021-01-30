@@ -15,12 +15,12 @@ timestamp=`date +%Y%m%d%H%M`
 listenport=18011:18011
 
 # build and Timezon Linking
-docker build --tag auto/errmail:$timestamp .
+docker build --tag auto/errmaildev:$timestamp .
 docker create --name errmaildev -p $listenport \
  -v /log/nodejs/:/log/nodejs/ \
  -v /etc/localtime:/etc/localtime:ro \
 -e TZ=Asia/Seoul \
-auto/errmail:$timestamp 
+auto/errmaildev:$timestamp 
 
 echo 'docker build complete.'
 
