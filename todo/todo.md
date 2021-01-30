@@ -38,5 +38,7 @@ TODO 01.30
         xhrGet timeout발생할 때까지 스케쥴링 대기.
         xhrGet timeout발생후, catch를 통해 에러를 잡고, order는 계속진행.
         (가격 조회API가 정상화 될 때까지.)
+
+   01.01에 예고한대로, 에러 메일링을 위한 docker 생성.
         
 ```
