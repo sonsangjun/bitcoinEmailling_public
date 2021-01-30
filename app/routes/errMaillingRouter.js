@@ -15,11 +15,18 @@ module.exports = router;
 const jsonObj = jsonUtil.getJsonObj('errMaillingRouter');
 
 /**
+ * 메일링 시작.
  */
-router.get('/mailling', function(req, res, next) {
+router.get('/run', function(req, res, next) {
     
-    logger.info('mailling');
+    logger.info('mailling run.');
     mailObj.run()
     .then((json)=>res.send(json))
     .catch((err)=>res.send(jsonObj.getMsgJson('-1',err)));
+});
+
+router.get('/stop', function(req, res, next) {
+    
+    logger.info('mailling stop.');
+    res.send(mailObj.stop());
 });

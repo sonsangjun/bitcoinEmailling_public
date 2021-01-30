@@ -80,6 +80,11 @@ module.exports = (function(){
                     let maillingInterval = curMsec - lastMailling;
 
                     logger.debug('curHHMM :'+curHHMM+', lastMailling(mSec): '+lastMailling);
+
+                    if(!isSwitchOnProcessing){
+                        logger.debug('stop mailling.');
+                        return ;
+                    }
                     
                     sqlObj.selectErrorCnt().then((result)=>{
                         errCnt = (result && result.length>0 ? result[0].cnt : 0);
@@ -122,7 +127,10 @@ module.exports = (function(){
                         }
 
                     }).catch((err)=>{
-
+                        // 메일링 중지.
+                        logger.error('mailling fail. '+objUtil.objView(err));
+                        svcObj.switchingOrderingFlag(false);
+                        setTimeout(prcsFn, dealSet.intervalTime*1000);
                     });
                 }
         
@@ -140,6 +148,14 @@ module.exports = (function(){
                 reject(errjson);
             });
         }));
+    };
+
+    /**
+     * 에러 메일링 서비스 정지
+     */
+    svcObj.stop = function(){
+        svcObj.switchingOrderingFlag(false);
+        return jsonObj.getMsgJson('0','send signal [mailling service stop]');
     };
 
     /**
