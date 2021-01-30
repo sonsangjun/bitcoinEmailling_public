@@ -11,10 +11,10 @@ module.exports = (function(){
     ///////////////////////////////////////////////////////////////////
     // Init Area
     const jsonObj = jsonUtil.getJsonObj('errMaillingService');
+    const isDev = objUtil.checkDevMode();
 
     let svcObj = {};
     let isSwitchOnProcessing = false;
-
     let dealSet = dealSetSvc.getDefaultSet();
 
     /**
@@ -66,47 +66,64 @@ module.exports = (function(){
 
         return (new Promise((resolve, reject)=>{
             svcObj.setDealSetting()
-            .then((result)=>svcObj.setMailSvcForMailer)
             .then((result)=>{
-                let lastMailling = 0;
+                // mailSvc설정
+                return svcObj.setMailSvcForMailer();
+            }).then((result)=>{
+                let lastMailling = Date.now();
 
                 const prcsFn = function(){
-                    
+                    logger.debug('======================= prcsMailling ======================= ');
                     const curMsec = Date.now();
-                    const curHHMM = 'T'+objUtil.getHHMM(Date.now());
+                    const curHHMM = 'T'+objUtil.getHHMM(curMsec);
+                    let errCnt = 0;
+                    let maillingInterval = curMsec - lastMailling;
 
                     logger.debug('curHHMM :'+curHHMM+', lastMailling(mSec): '+lastMailling);
                     
-                    // 보내는 조건 (에러 내용이 있을때, 정해진 주기마다 or 정해진 갯수마다.)
-                    // dealSet.errMail.definedHour / dealSet.errMail.definedCnt
-                    const errCnt = sqlObj.selectErrorCnt();
-                    const maillingInterval = curMsec - lastMailling;
+                    sqlObj.selectErrorCnt().then((result)=>{
+                        errCnt = (result && result.length>0 ? result[0].cnt : 0);
 
-                    if((maillingInterval > bConst.DATE_MSEC.DAY) || (errCnt >= dealSet.errMail.definedCnt)){
-                        // 정해진 시간 OR 갯수를 충족하는 경우
-                        logger.debug('mailling start.');
-                        lastMailling = curMsec;
-                        sqlObj.selectErrorHistory()
-                        .then((result)=>{
-                            // 메일링 진행.
-                            svcObj.prcsSendingEmail(result);
-                        }).then((errorIds)=>{
-                            // 메일링 성공 및 DB에 SendFlag수정(N->Y)
-                            return sqlObj.updateSendingMail(errorIds);
-                        }).then((result)=>{
-                            // 메일링 성공. 스케쥴링 다시 진행
-                            logger.debug('mailling success.');
-                            setTimeout(prcsFn, dealSet.intervalTime*1000);                            
-                        }).catch((err)=>{
-                            // 메일링 중지.
-                            svcObj.switchingOrderingFlag(false);
+                        // 보내는 조건 (에러 내용이 있을때, 정해진 주기마다 or 정해진 갯수마다.)
+                        // dealSet.errMail.definedHour / dealSet.errMail.definedCnt
+                        logger.debug('result : '+objUtil.objView(result));
+                        logger.debug('errCnt :'+errCnt+', maillingInterval: '+maillingInterval);
+
+                        if((errCnt < 1)){
+                            // 정해진 시간 OR 갯수를 충족하지 않는 경우. Waitting
                             setTimeout(prcsFn, dealSet.intervalTime*1000);
-                        });
 
-                    }else{
-                        // 정해진 시간 OR 갯수를 충족하지 않는 경우. Waitting
-                        setTimeout(prcsFn, dealSet.intervalTime*1000);
-                    }
+                        }else if((maillingInterval > bConst.DATE_MSEC.DAY) || (errCnt >= dealSet.errMail.definedCnt)){
+                            // 정해진 시간 OR 갯수를 충족하는 경우
+                            logger.debug('mailling start.');
+                            lastMailling = curMsec;
+                            sqlObj.selectErrorHistory().then((data)=>{
+                                // 메일링 진행.
+                                logger.debug('selectErrorHistory complete');
+                                return svcObj.prcsSendingEmail(data);
+                            }).then((errorIds)=>{
+                                // 메일링 성공 및 DB에 SendFlag수정(N->Y)
+                                logger.debug('prcsSendingEmail complete. '+objUtil.objView(errorIds));
+                                return sqlObj.updateSendingMail(errorIds);
+                            }).then(()=>{
+                                // 메일링 성공. 스케쥴링 다시 진행
+                                logger.debug('mailling success.');
+                                setTimeout(prcsFn, dealSet.intervalTime*1000);                            
+                            }).catch((err)=>{
+                                // 메일링 중지.
+                                logger.error('mailling fail. '+objUtil.objView(err));
+                                svcObj.switchingOrderingFlag(false);
+                                setTimeout(prcsFn, dealSet.intervalTime*1000);
+                            });
+
+                        }else{
+                            // 정해진 시간 OR 갯수를 충족하지 않는 경우. Waitting
+                            setTimeout(prcsFn, dealSet.intervalTime*1000);
+                        }
+
+                    }).catch((err)=>{
+
+                    });
                 }
         
                 // 메일링시작.
@@ -131,7 +148,7 @@ module.exports = (function(){
      * @param {any} errList 에러목록
      */
     svcObj.prcsSendingEmail = function(errList){
-        logger.debug('prcsSendingEmail call. '+objUtil.objView(errList));
+        logger.debug('prcsSendingEmail call. ');
 
         const timestamp = Date.now();
         const title = mailSvc.noticeType.ERROR+' '+(isDev?'(DEV)':'')+'Report Server Error.';
@@ -144,7 +161,7 @@ module.exports = (function(){
         if(errList && errList.length > 0){
             errCnt = errList.length;
             errList.forEach((obj)=>{
-                errCntn+= '[ID:'+obj.errorId+'][Time:'+objUtil.getYYYYMMDD(obj.sellTime)+'.'+objUtil.getHHMM(obj.sellTime)+']_'+obj.err.errorMsg+'<br/>'
+                errCntn+= '[ID:'+obj.errorId+'][Time:'+objUtil.getYYYYMMDD(obj.errorTime)+'.'+objUtil.getHHMM(obj.errorTime)+']<br/>'+obj.errorMsg+'<p/>'
                 let uptJson = {};
                 uptJson.errorId = obj.errorId;
                 uptJson.sendTime = timestamp;
@@ -153,18 +170,18 @@ module.exports = (function(){
             })
         }
 
+        logger.debug('prcsSendingEmail errCnt:'+errCnt+', errorIds:'+objUtil.objView(errorIds));
         content = '안녕하세요. '+dealSet.mail.sender+'입니다.' +'<br>'
                     +'<br>'
-                    + '매매서버에서 발생한 에러사항 공유드립니다.'+'<br>'
+                    + 'OrderServer에서 발생한 Error내역 공유드립니다.'+'<br>'
                     +'<br>'+'<br>'
-                    + '[보고된 에러갯수:'+errCnt+']'+'<br>'
+                    + '* 보고된 에러갯수:'+errCnt+'<br>'
                     + '<br>'
                     + '[에러내역]'+'<br>'
                     + errCntn
                     + '<br>'
-                    + '<br><br><br>'
-                    + '참고하시어 매매시 불필요한 손실을 사전에 예방해주세요.' +'<br>'
-                    + '<br><br><br>'
+                    + '참고하시어 매매시 오류로 인한 불필요한 손실을 사전에 예방해주세요.' +'<br>'
+                    + '<br>'
                     + '그럼,<br>'
                     + '오늘도 수고하세요~' +'<br>';
 
@@ -205,6 +222,12 @@ module.exports = (function(){
         .then((res)=>logger.debug(jsonObj.getMsgJson('0','insertErrorCntn success.')))
         .catch((err)=>logger.error(jsonObj.getMsgJson('-1','insertErrorCntn fail. '+objUtil.objView(err))));
     };
+
+    // 에러 메일링 보내는 것은 설정값에 주기를 1시간정도로 설정하여
+    // 에러가 존재시, 메일보내고 없으면 보내지 말 것.
+    // dealService의 setTimeout으로 돌리는 로직 참고.
+
+    // 에러 메일링은 docker 분리적용
 
     return svcObj;
 })();

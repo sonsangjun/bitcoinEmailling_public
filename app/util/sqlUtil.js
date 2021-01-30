@@ -112,7 +112,7 @@ let sqlObj = {};
     };
 
     ////////////////////////////////////////////////////////////
-    // Update
+    // Insert
     sqlObj.insertErrorHistory = function(arr){
         const queryStr = 'INSERT INTO error_history (errorMsg ,errorTime ,sendFlag ,sendTime ,del ) VALUES (?);';
         let values = [];
@@ -137,26 +137,47 @@ let sqlObj = {};
         return queryPromise(queryStr, values);
     };
 
-    ////////////////////////////////////////////////////////////
-    // Update
-    sqlObj.updateSendingMail = function(arr){
-        const queryStr = 'UPDATE error_history SET sendFlag = ? , sendTime = ? WHERE errorId = ?; ';
+    sqlObj.insertEmailSendHistory = function(arr){
+        const queryStr = 'INSERT INTO email_send_history (email_subject, email_content, sendTime, del) VALUES (?);';
         let values = [];
 
-        logger.info('[updateSendingMail] query : '+queryStr);
-
+        logger.info('[insertEmailSendHistory] query : '+queryStr);
+        
         if(arr && arr.length > 0){
             arr.forEach(el => {
-                const value = [
-                    el.sendFlag 
-                    ,el.sendTime 
-                    ,el.errorId
-                ];
+                const value = [el.email_subject, el.email_content, el.sendTime, 'N'];
                 values.push(value);
             });
 
+            logger.debug('values ==> \n'+obj2Str.objView(values));
+            return queryPromise(queryStr, values);
+        }
+    };
+
+    ////////////////////////////////////////////////////////////
+    // Update
+    sqlObj.updateSendingMail = function(arr){
+        let queryStr = 'UPDATE error_history SET ';
+        let whereIn = [];
+        let values = [];
+
+        if(arr && arr.length > 0){
+            const sendFlag = arr[0].sendFlag;
+            const sendTime = arr[0].sendTime;
+
+            queryStr += (' sendFlag="'+sendFlag+'"');
+            queryStr += (',sendTime="'+sendTime+'"');
+            queryStr += (' WHERE errorId IN (?) ');
+
+
+            arr.forEach(el => {
+                whereIn.push(el.errorId);
+            });
+
+            values.push(whereIn);
         }
 
+        logger.info('[updateSendingMail] query : '+queryStr);
         logger.debug('values ==> \n'+obj2Str.objView(values));
         return queryPromise(queryStr, values);
     }
