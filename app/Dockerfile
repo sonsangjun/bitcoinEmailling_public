@@ -10,5 +10,5 @@ RUN npm install
 COPY . .
 
 ENV NODE_ENV development
-EXPOSE 18001
+EXPOSE 18011
 CMD [ "node", "server.js" ]

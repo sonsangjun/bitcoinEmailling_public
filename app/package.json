@@ -1,22 +1,22 @@
 {
   "name": "server.js",
   "version": "1.0.0",
-  "description": "autoDealForBitcoin",
+  "description": "autoDealForBitcoinMailling",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "author": "san9014@gmail.com",
+  "author": "TEST@gmail.com",
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonsangjun/bitcoinAuto.git"
+    "url": "git+https://github.com/sonsangjun/bitcoinEmailling_public.git"
   },
   "bugs": {
-    "url": "https://github.com/sonsangjun/bitcoinAuto/issues"
+    "url": "https://github.com/sonsangjun/bitcoinEmailling_public/issues"
   },
-  "homepage": "https://github.com/sonsangjun/bitcoinAuto#readme",
+  "homepage": "https://github.com/sonsangjun/bitcoinEmailling_public#readme",
   "dependencies": {
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
