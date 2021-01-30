@@ -13,6 +13,8 @@ module.exports = (function(){
     constant.DATE_TYPE.YER = 'Y';
     
     constant.DATE_MSEC = {};
+
+    constant.DATE_MSEC.HOUR = 3600*1000;
     constant.DATE_MSEC.DAY = 86400*1000;
 
     constant.YN={};

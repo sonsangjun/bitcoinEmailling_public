@@ -98,7 +98,7 @@ module.exports = (function(){
                             // 정해진 시간 OR 갯수를 충족하지 않는 경우. Waitting
                             setTimeout(prcsFn, dealSet.intervalTime*1000);
 
-                        }else if((maillingInterval > bConst.DATE_MSEC.DAY) || (errCnt >= dealSet.errMail.definedCnt)){
+                        }else if((maillingInterval > (dealSet.errMail.definedHour * bConst.DATE_MSEC.HOUR)) || (errCnt >= dealSet.errMail.definedCnt)){
                             // 정해진 시간 OR 갯수를 충족하는 경우
                             logger.debug('mailling start.');
                             lastMailling = curMsec;
