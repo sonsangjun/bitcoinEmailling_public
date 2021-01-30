@@ -177,7 +177,7 @@ module.exports = (function(){
         if(errList && errList.length > 0){
             errCnt = errList.length;
             errList.forEach((obj)=>{
-                errCntn+= '[ID:'+obj.errorId+'][Time:'+objUtil.getYYYYMMDD(obj.errorTime)+'.'+objUtil.getHHMM(obj.errorTime)+']<br/>'+obj.errorMsg+'<p/>'
+                errCntn+= '[ID:'+obj.errorId+'][Time:'+objUtil.getYYYYMMDD(obj.errorTime)+'.'+objUtil.getHHMM(obj.errorTime)+']<br/><font color="red">'+obj.errorMsg+'</font><p/>'
                 let uptJson = {};
                 uptJson.errorId = obj.errorId;
                 uptJson.sendTime = timestamp;
