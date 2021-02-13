@@ -24,7 +24,7 @@ module.exports = (function(){
         logger.debug('setDealSetting start ==> ');
 
         return (new Promise((resolve,reject)=>{
-            dealSetSvc.selectDealSetFromDB().then((result)=>{
+            dealSetSvc.selectDealSetFromDBnEnv().then((result)=>{
                 // DealSet 설정
                 dealSet = result;
                 logger.debug('setDealSetting complete ==> '+objUtil.objView(dealSet));

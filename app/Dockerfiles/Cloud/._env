@@ -1,0 +1,5 @@
+iscloud=true
+logBasePath=/home/UserName/
+targetSymbol=BTCUSDT
+devport=3000
+realport=13000

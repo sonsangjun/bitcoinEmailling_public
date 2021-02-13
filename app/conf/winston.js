@@ -1,10 +1,13 @@
 const winston = require('winston');            // winston lib
 const winstonDaily = require('winston-daily-rotate-file');
 const process = require('process');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const isDev = (process.env.NODE_ENV !== 'production' ? true : false);
 const modeStr = isDev ? 'development' : 'production';
-const logDir = (modeStr==='production'?'/log/nodejs/production':'/log/nodejs/development');  // 디렉토리 로그 파일 저장
+const logDir = (process.env.logBasePath)+(modeStr==='production'?'/log/nodejs/mailling/production':'/log/nodejs/mailling/development');  // 디렉토리 로그 파일 저장
 const { combine, timestamp, printf } = winston.format;
 
 // Define log format

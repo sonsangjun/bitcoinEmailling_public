@@ -2,9 +2,15 @@ const objUtil = require('../util/objectUtil');
 const logger = require('../conf/winston');
 const sqlObj = require('../util/sqlUtil');
 const jsonUtil = require('../util/jsonUtil');
+const bConst = require('../util/bitConst');
+
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 module.exports = (function(){
     let dSetObj = {};
+    let jsonObj = jsonUtil.getJsonObj('dealSetService');
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     // 기본 값 정의  
@@ -46,6 +52,10 @@ module.exports = (function(){
         sellCond : 0.3,
         rateGap : 0.1,
         hitWeight : 2,
+        isUseGap : false,
+
+        buyGapOutCnt  : 3, // (매수)갭이탈횟수
+        sellGapOutCnt : 3, // (매도)갭이탈횟수
 
         maxHitCond : {
             SELL : 10,
@@ -91,10 +101,11 @@ module.exports = (function(){
         minSbCash : 12,
         modKellyValue : 50,
 
-        // 메일링 변수
-        errMail : {
-            definedHour : 1,
-            definedCnt : 5
+        // 시세조회대상심볼
+        coinPrice : {
+            List : 'BTCUSDT, BNBUSDT',
+            intervalTime : 1,
+            weight : 49,
         }
     };
 
@@ -108,21 +119,39 @@ module.exports = (function(){
     /**
      * 디비로부터 정보 가져오기
      */
-    dSetObj.selectDealSetFromDB = function(){
+    dSetObj.selectDealSetFromDBnEnv = function(){
         logger.debug('setDealSetting start ==> ');
 
-        return (new Promise((resolve,reject)=>{
-            sqlObj.selectDealSetting().then((result)=>{
-                // DealSet 설정
-                // dealSet
-                jsonResult = objUtil.dealSetting2Json(result);
+        return (new Promise(async (resolve,reject)=>{
+            try{
+                const targetSymbol = process.env.targetSymbol;
+                const commResult = await sqlObj.selectDealSetting(bConst.SYMBOL_COMM);
+                const targetResult = await sqlObj.selectDealSetting(targetSymbol);
 
-                logger.debug('setDealSetting complete ==> '+objUtil.objView(dealSet));
-                resolve(jsonResult);
+                let commJson = {};
+                let targetJson = {};
+                let finalJson = {};
 
-            }).catch((err)=>{
-                reject(jsonUtil.getMsgJson('-1',err));
-            });
+                // DealSet 설정 From DB
+                commJson = objUtil.dealSetting2Json(commResult);
+                targetJson = objUtil.dealSetting2Json(targetResult);
+
+                finalJson = Object.assign(commJson, targetJson);
+    
+                // DealSet 설정 From Env (거래심볼)
+                if(targetSymbol){
+                    logger.debug('targetSymbol is '+targetSymbol);
+                    finalJson.symbol = targetSymbol;
+                }
+    
+                console.warn('commJson==>',commJson,'targetJson==>',targetJson,'finalJson==>',finalJson);
+                logger.debug('setDealSetting targetSymbol(.env):'+targetSymbol);
+                logger.debug('setDealSetting complete ==> '+objUtil.objView(finalJson));
+                resolve(finalJson);
+
+            }catch(err){
+                reject(jsonObj.getMsgJson('-1',err));
+            }
         }));
     };
 

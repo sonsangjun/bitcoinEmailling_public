@@ -2,12 +2,14 @@ const nodemailer = require('nodemailer');
 const logger = require('../conf/winston');
 const sql = require('./sqlUtil');
 const objUtil = require('./objectUtil');
+const bConst = require('../util/bitConst');
+
 let transporter = {};
 
 transporter.getTransporter = function(){
     let dealSet = {};
     
-    return sql.selectDealSetting().then((result)=>{
+    return sql.selectDealSetting(bConst.SYMBOL_COMM).then((result)=>{
         // DealSet 설정
         // dealSet
         console.warn('create transport selectDealSetting');
@@ -50,8 +52,8 @@ transporter.getTransporter = function(){
         mailSvc.defaultOpt.from = {}; // Sender (보내는 사람)
         mailSvc.defaultOpt.to = {};   // receivers (받는 사람)
         mailSvc.defaultOpt.from.name = '이름';
-        mailSvc.defaultOpt.from.address = 'TEST@gmail.com'; // 보내는 이 주소
-        mailSvc.defaultOpt.to.address = 'TEST@gmail.com';   // 받는이 주소
+        mailSvc.defaultOpt.from.address = 'TEST@gmail.com';
+        mailSvc.defaultOpt.to.address = 'UserName@naver.com';
         mailSvc.defaultOpt.subject= "DefaultMain", // Subject line
         mailSvc.defaultOpt.html= "No Content." // html body
 

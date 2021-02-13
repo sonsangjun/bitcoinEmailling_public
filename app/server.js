@@ -2,6 +2,9 @@
 var express = require('express');
 var http = require('http');
 var logger = require('./conf/winston');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 var app = express();
 
@@ -16,7 +19,7 @@ console.log('env : ',app.get('env'));
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //express 서버 포트 설정
-const portValue = (process.env.NODE_ENV =='production' ? 8011 : 18011 );
+const portValue = (process.env.NODE_ENV =='production' ? process.env.realport : process.env.devport );
 app.set('port', portValue);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

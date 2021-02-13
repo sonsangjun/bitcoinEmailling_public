@@ -2,32 +2,7 @@ const bConst = require('../util/bitConst');
 const obj2Str = require('./objectUtil');
 const logger = require('../conf/winston');
 const mysql = require('mysql');
-
-let mysqlConfig = { };
-
-// 
-const thisOs = process.env.OS;
-const dbHost = '0.0.0.0'; // 접속할 DB IP
-// const dbHost = (thisOs == 'Windows_NT' ? '0.0.0.0' : 'localhost');
-
-if (process.env.NODE_ENV !== 'production') {
-    mysqlConfig = {
-        host : dbHost,
-        user : 'ID입력',
-        password : '암호입력',
-        database : 'bitcoin_dev'        
-    };
-}else{
-    mysqlConfig = {
-        host : dbHost,
-        user : 'ID입력',
-        password : '암호입력',
-        database : 'bitcoin'        
-    };
-}
-
-const connection = mysql.createConnection(mysqlConfig);
-connection.connect();
+const connection = require('./sqldb/sqlConnector');
 
 let sqlObj = {};
 
@@ -103,8 +78,8 @@ let sqlObj = {};
         return queryPromise(queryStr);
     };
 
-    sqlObj.selectDealSetting = function(){
-        let queryStr = 'select * from deal_settings where del="N";'
+    sqlObj.selectDealSetting = function(symbol){
+        let queryStr = 'select * from deal_settings where del="N" and symbol="'+symbol+'";'
 
         logger.info('[selectDealSetting] query : '+queryStr);
 
