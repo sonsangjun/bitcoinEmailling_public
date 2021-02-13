@@ -135,16 +135,14 @@ module.exports = (function(){
                 // DealSet 설정 From DB
                 commJson = objUtil.dealSetting2Json(commResult);
                 targetJson = objUtil.dealSetting2Json(targetResult);
-
-                finalJson = Object.assign(commJson, targetJson);
+                finalJson = objUtil.mergeJson(commJson, targetJson);
     
                 // DealSet 설정 From Env (거래심볼)
                 if(targetSymbol){
                     logger.debug('targetSymbol is '+targetSymbol);
                     finalJson.symbol = targetSymbol;
                 }
-    
-                console.warn('commJson==>',commJson,'targetJson==>',targetJson,'finalJson==>',finalJson);
+                
                 logger.debug('setDealSetting targetSymbol(.env):'+targetSymbol);
                 logger.debug('setDealSetting complete ==> '+objUtil.objView(finalJson));
                 resolve(finalJson);

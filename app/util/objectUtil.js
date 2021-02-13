@@ -4,11 +4,10 @@ let objUtil = {};
 
 /**
  * 객체 내용을 String로 변환한다.
+ * (JSON Object Method 적용.)
  * @param {any} arr 객체
  */
 objUtil.objView = function(arr){
-    let vStr = '';
-
     // 공백
     if(!arr){
         return '';
@@ -19,36 +18,24 @@ objUtil.objView = function(arr){
         return arr;
     }
 
-    // 배열
-    if(arr && Array.isArray(arr) && arr.length > 0){
-        vStr+='[';
-        arr.forEach(function(el,index){
-            vStr+=index+':'+objUtil.objView(el); 
-            vStr+=(index < arr.length-1 ? ', ' : '');
-        });
-        vStr+=']';
+    // 배열 && Object
+    try{
+        let jsonStr = "";
 
-        return vStr;
+        if(arr['stack']){
+            jsonStr = arr['stack'].toString();
+        }else{
+            jsonStr = JSON.stringify(arr,null,1);
+        }
+
+        const keys = Object.keys(jsonStr);
+        const len = (keys ? keys.length : 0);
+        
+        return (len > 0 ? jsonStr : arr.toString());
+
+    }catch(e){
+        return 'undefined error.';
     }
-
-    // Object
-    const keys = Object.keys(arr);
-
-    if((keys && keys.length > 0)){
-        vStr+='{';
-    
-        keys.forEach(function(el,index){
-            vStr+=keys[index]+':'+objUtil.objView(arr[el]); 
-            vStr+=(index < keys.length-1 ? ', ' : '');
-        });
-    
-        vStr+='}';
-
-        return vStr;
-    }
-
-    // Others cnvt String.
-    return arr.toString();
 };
 
 
@@ -117,6 +104,52 @@ objUtil.dealSetting2Json = function(result){
 
     return dealSet;
 };
+
+/**
+ * json을 병합한다.
+ * (하위JSON을 json2로 덮어쓰지 않고, 같이 병합한다.)
+ * @param {any} json1 
+ * @param {any} json2 
+ */
+objUtil.mergeJson = function(json1, json2){
+    let newJson = JSON.parse(JSON.stringify(json1));
+    const json1Key = Object.keys(json1);
+    const json2Key = Object.keys(json2);
+
+    json2Key.forEach((key)=>{
+        const typeofJson1 = typeof json1[key];
+        const typeofJson2 = typeof json2[key];
+
+        if(typeofJson2 === 'undefined' || String(json2[key]) === 'null'){
+            if(typeofJson1 === 'undefined' || String(json1[key]) === 'null'){
+                newJson[key] = '';
+            }else{
+                newJson[key] = json1[key];
+            }
+
+        }else if(objUtil.checkJson(json1[key]) && objUtil.checkJson(json2[key])){
+            logger.debug('two json: '+json1[key]+', '+json2[key]);
+            newJson[key] = objUtil.mergeJson(json1[key],json2[key]);
+        }else if(typeofJson2 === 'string' || typeofJson2 === 'number' || typeofJson2 === 'boolean'){
+            newJson[key] = json2[key];
+        }
+    });
+    
+    return newJson;
+};
+
+/**
+ * 파라메터가 json인지 체크
+ * @param {any} obj json
+ */
+objUtil.checkJson = function(obj){
+    try{
+        const jsonObj = JSON.parse(JSON.stringify(obj));
+        return (typeof jsonObj === 'object');
+    }catch(e){
+        return false;
+    }
+}
 
 objUtil.getYYYYMMDD = function(timestamp) {
     const dObj = new Date(timestamp);
