@@ -1,4 +1,5 @@
 const logger = require("../conf/winston");
+const bConst = require('./bitConst');
 
 let objUtil = {};
 
@@ -67,6 +68,25 @@ objUtil.parseValue = function(value){
 };
 
 /**
+ * 숫자가 아닌 오류값을 숫자0으로 반환
+ * @param {any} value 
+ * @param {any} replaceValue 
+ */
+objUtil.parseNoneNumValue = function(value, replaceValue){
+    if(!value){
+        return (replaceValue ? replaceValue : 0);
+    }
+
+    const typeofStr = typeof value;
+
+    if(value==='NaN' || value==='undefined' || value==='null'){
+        return (replaceValue ? replaceValue : 0);
+    }
+
+    return value;
+};
+
+/**
  * dealSetting값을 json로 변환
  */
 objUtil.dealSetting2Json = function(result){
@@ -128,7 +148,6 @@ objUtil.mergeJson = function(json1, json2){
             }
 
         }else if(objUtil.checkJson(json1[key]) && objUtil.checkJson(json2[key])){
-            logger.debug('two json: '+json1[key]+', '+json2[key]);
             newJson[key] = objUtil.mergeJson(json1[key],json2[key]);
         }else if(typeofJson2 === 'string' || typeofJson2 === 'number' || typeofJson2 === 'boolean'){
             newJson[key] = json2[key];
@@ -136,6 +155,20 @@ objUtil.mergeJson = function(json1, json2){
     });
     
     return newJson;
+};
+
+/**
+ * 계좌심볼을 거래심볼로 변경
+ * (ex. BTC -> BTCUSDT)
+ * @param {any} symbol 코인 심볼
+ */
+objUtil.cnvtCoin2CoinUsdt = function(symbol){
+    const upperSymbol = (symbol ? String(symbol).toUpperCase() : '');
+    switch(upperSymbol){
+        case bConst.ACCOUT_SYMBOL.BTC : return bConst.TRADE_SYMBOL_USDT.BTC; 
+        case bConst.ACCOUT_SYMBOL.BNB : return bConst.TRADE_SYMBOL_USDT.BNB; 
+        default : return symbol;
+    }
 };
 
 /**
@@ -160,6 +193,16 @@ objUtil.getYYYYMMDD = function(timestamp) {
             (mm>9 ? '' : '0') + mm,
             (dd>9 ? '' : '0') + dd
            ].join('');
+};
+
+objUtil.getIntervalYYYYMMDD = function(start, end) {
+    const startStamp = new Date(start.substr(0,4)+'-'+start.substr(4,2)+'-'+start.substr(6,2)).getTime();
+    const endStamp = new Date(end.substr(0,4)+'-'+end.substr(4,2)+'-'+end.substr(6,2)).getTime();
+
+    const intervalStamp = endStamp - startStamp;
+    const intervalDay = Math.ceil((intervalStamp / (86400*1000)));
+
+    return intervalDay;
 };
 
 objUtil.getHHMMSS = function(timestamp) {

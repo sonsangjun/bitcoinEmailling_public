@@ -95,17 +95,40 @@ module.exports = (function(){
         exchangeInfo : null,
 
         // 켈리공식을 이용한 베팅규모 동적조절여부
+        // isOrderKellyRate 는 동적주문비율 사용여부
         // minSbCash은 거래소 최소거래단위인 10이 최소값.
         // modKellyRate는 켈리비율 보정수치(%)
+        // staticKellyRate는 정적캘리비율 수치(미사용시 0)
         isUseKellyBetSbCash : false,
+        isOrderKellyRate : true,
         minSbCash : 12,
         modKellyValue : 50,
+        staticKellyRate  : 0,
 
         // 시세조회대상심볼
         coinPrice : {
             List : 'BTCUSDT, BNBUSDT',
             intervalTime : 1,
             weight : 49,
+        },
+
+        // 나노매수 기능
+        nanoBuy : {
+            isUseNanoBuy : true,
+            nanoBuyRatio : 5
+        },
+
+        // 동적매도 기능
+        dynamicSell : {
+            isUse : true,
+            minHitCnt : 150,
+            intervalCnt : 300
+        },
+
+        // 바이낸스 시스템 점검시간 (타임스탬프 값)
+        systemCheck : {
+            startTime : 0,
+            endTime : 0
         }
     };
 
